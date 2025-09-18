@@ -18,5 +18,7 @@ setup(
     python_requires=">=3.12",
     install_requires=[
         "jobflow",
+        "scikit-optimize",
+        "numpy",
     ]
 )
