@@ -1,4 +1,56 @@
+from jobflow import Flow, Response, job, Maker
+from jobflow import Response
+from jobflow.managers.local import run_locally
+from dataclasses import dataclass
+from skopt import gp_minimize
+from skopt.space import Real, Integer
+import numpy as np
+from typing import Callable, Dict, Any
 from jobflow import job
+from jobflow_remote.utils.examples import add
+
+
+@dataclass
+class LADMaker(Maker):
+    name: str = 'LAD'
+    a: int = 2
+    key1: str = 'key1'
+    key2: str = 'key2'
+
+    @job
+    def add(self, a, b):
+        return a + b
+
+    @job
+    def make_list(self, a):
+        from random import randint
+        return [a] * randint(2,5)
+
+    @job
+    def add_distributed(self, list_a, key):
+        jobs = [self.add(val, 1) for val in list_a]
+        for i in range(len(jobs)):
+            jobs[i].update_metadata({'key':f'{key}_{i}'})
+        flow = Flow(jobs)
+        return Response(replace=flow)
+
+    def make(self):
+        job1 = self.make_list(self.a)
+        job1.update_metadata({'key':f'{self.key1}'})
+        job2 = self.add_distributed(job1.output, key = f'{self.key2}')
+        return Flow([job1, job2])
+
+@job
+def make_list(a):
+    from random import randint
+    return [a] * randint(2,5)
+@job
+def add_distributed(list_a, key):
+    jobs = [add(val, 1) for val in list_a]
+    for i in range(len(jobs)):
+        jobs[i].update_metadata({'key':f'{key}_{i}'})
+    flow = Flow(jobs)
+    return Response(replace=flow)
 
 @job
 def count_str(input_str: str):
@@ -8,15 +60,6 @@ def count_str(input_str: str):
 def sum_numbers(numbers):
     print(sum(numbers))
     return sum(numbers)
-
-from jobflow import Flow, Response, job, Maker
-from jobflow import Response
-from jobflow.managers.local import run_locally
-from dataclasses import dataclass
-from skopt import gp_minimize
-from skopt.space import Real, Integer
-import numpy as np
-from typing import Callable, Dict, Any
 
 def cp_updt_dict(old_dict, up_dict):
     if old_dict == None:
