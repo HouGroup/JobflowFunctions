@@ -3,12 +3,11 @@ from jobflow import Response
 from jobflow.managers.local import run_locally
 from dataclasses import dataclass
 from skopt import gp_minimize
-from skopt.space import Real, Integer
+from skopt.space import Real
 import numpy as np
-from typing import Callable, Dict, Any
+from typing import Callable, Dict, Any, List
 from jobflow import job
 from jobflow_remote.utils.examples import add
-
 
 @dataclass
 class LADMaker(Maker):
